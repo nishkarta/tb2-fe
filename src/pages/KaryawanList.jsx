@@ -1,24 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getKaryawan, getKaryawanById, deleteKaryawan } from '../api';
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function KaryawanList() {
   const [list, setList] = useState([]);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300)
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const  fetchList= useCallback(async()=> {
+  const fetchList = useCallback(async () => {
     setLoading(true);
-    try { const r = await getKaryawan(search); setList(r.data); }
+    try { const r = await getKaryawan(debouncedSearch); setList(r.data); }
     catch { setMsg('Gagal memuat data.'); }
     finally { setLoading(false); }
-  }, [])
+  }, [debouncedSearch])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchList();
-  }, [search]);
+  }, [fetchList]);
 
   async function openDetail(id) {
     try { const r = await getKaryawanById(id); setDetail(r.data); }
@@ -47,7 +49,7 @@ export default function KaryawanList() {
         </div>
         <input
           className="bg-surface border border-border rounded-lg px-4 py-2.5 text-text text-sm outline-none w-64 focus:border-accent/40 transition-colors"
-          placeholder="🔍  Cari nama atau ID..."
+          placeholder="🔍  Cari karyawan"
           value={search} onChange={e => setSearch(e.target.value)}
         />
       </div>
@@ -133,10 +135,12 @@ export default function KaryawanList() {
             <div className="mt-5 flex flex-col">
               {[
                 ['ID', detail.id_karyawan],
+                ['Klien', detail.nama_klien],
                 ['Email', detail.email],
                 ['Telepon', detail.no_telp],
                 ['Alamat', detail.alamat],
                 ['Gaji Pokok', `Rp ${Number(detail.gaji_pokok).toLocaleString('id-ID')}`],
+                ['Penempatan', detail.nama_kota],
               ].map(([label, val]) => (
                 <div key={label} className="flex justify-between py-2.5 border-b border-border gap-2">
                   <span className="text-xs text-muted shrink-0">{label}</span>
